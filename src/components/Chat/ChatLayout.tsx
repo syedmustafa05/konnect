@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,35 +36,7 @@ const ChatLayout = () => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showSearch, setShowSearch] = useState(false);
 
-  // Load user profile
-  useEffect(() => {
-    if (user) {
-      loadUserProfile();
-    }
-  }, [user]);
-
-  // Load conversations
-  useEffect(() => {
-    if (userProfile) {
-      loadConversations();
-    }
-  }, [userProfile]);
-
-  // Redirect to auth if not logged in
-  if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
     if (!user) return;
 
     const { data: profile, error } = await supabase
@@ -79,9 +51,9 @@ const ChatLayout = () => {
     }
 
     setUserProfile(profile);
-  };
+  }, [user]);
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     if (!user) return;
 
     // Get conversations where user is a participant
@@ -134,7 +106,35 @@ const ChatLayout = () => {
     );
 
     setConversations(conversationsWithProfiles);
-  };
+  }, [user]);
+
+  // Load user profile
+  useEffect(() => {
+    if (user?.id) {
+      loadUserProfile();
+    }
+  }, [user?.id, loadUserProfile]);
+
+  // Load conversations
+  useEffect(() => {
+    if (userProfile?.user_id && user?.id) {
+      loadConversations();
+    }
+  }, [userProfile?.user_id, user?.id, loadConversations]);
+
+  // Redirect to auth if not logged in
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   const startConversation = async (otherUserId: string) => {
     if (!user) return;
