@@ -36,20 +36,6 @@ const ChatLayout = () => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [showSearch, setShowSearch] = useState(false);
 
-  // Redirect to auth if not logged in
-  if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   // Load user profile
   useEffect(() => {
     if (user) {
@@ -63,6 +49,20 @@ const ChatLayout = () => {
       loadConversations();
     }
   }, [userProfile]);
+
+  // Redirect to auth if not logged in
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   const loadUserProfile = async () => {
     if (!user) return;
