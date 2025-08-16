@@ -97,8 +97,6 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
   };
 
   const subscribeToMessages = () => {
-    console.log('Setting up real-time subscription for conversation:', conversationId);
-    
     const channel = supabase
       .channel(`messages-${conversationId}`)
       .on(
@@ -110,24 +108,19 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          console.log('Received new message via real-time:', payload.new);
           setMessages(prev => {
             // Check if message already exists to prevent duplicates
             const exists = prev.some(msg => msg.id === payload.new.id);
             if (exists) {
-              console.log('Message already exists, skipping duplicate');
               return prev;
             }
             return [...prev, payload.new as Message];
           });
         }
       )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   };
@@ -136,36 +129,28 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
     e.preventDefault();
     if (!newMessage.trim() || loading) return;
 
-    console.log('Attempting to send message:', newMessage.trim());
+    const messageContent = newMessage.trim();
+    setNewMessage('');
     setLoading(true);
     
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: currentUserId,
-        content: newMessage.trim()
-      })
-      .select()
-      .single();
+        content: messageContent
+      });
 
     if (error) {
       console.error('Error sending message:', error);
-      setLoading(false);
-      return;
-    }
-
-    console.log('Message sent successfully:', data);
-    setNewMessage('');
-    
-    // Update conversation timestamp
-    const { error: updateError } = await supabase
-      .from('conversations')
-      .update({ updated_at: new Date().toISOString() })
-      .eq('id', conversationId);
-
-    if (updateError) {
-      console.error('Error updating conversation timestamp:', updateError);
+      // Restore the message if there was an error
+      setNewMessage(messageContent);
+    } else {
+      // Update conversation timestamp
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
     }
 
     setLoading(false);
@@ -250,16 +235,16 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
                 <div
                   className={`max-w-[85%] sm:max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
                     isOwn
-                      ? 'bg-[hsl(var(--message-bg))] text-[hsl(var(--message-text))]'
-                      : 'bg-[hsl(var(--received-message-bg))] text-[hsl(var(--received-message-text))]'
+                      ? 'bg-message-sent text-message-sent-foreground'
+                      : 'bg-message-received text-message-received-foreground'
                   }`}
                 >
                   <div className="text-sm">{message.content}</div>
                   <div
                     className={`text-xs mt-1 ${
                       isOwn 
-                        ? 'text-primary-foreground/70' 
-                        : 'text-muted-foreground/70'
+                        ? 'text-message-sent-foreground/70' 
+                        : 'text-message-received-foreground/70'
                     }`}
                   >
                     {formatMessageTime(message.created_at)}

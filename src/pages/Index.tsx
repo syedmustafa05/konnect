@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { MessageCircle, Users, Zap, Shield } from 'lucide-react';
@@ -27,10 +27,10 @@ const Index = () => {
           {!loading && (
             <div className="flex items-center gap-4">
               <Button variant="ghost" asChild>
-                <a href="/auth">Sign In</a>
+                <Link to="/auth">Sign In</Link>
               </Button>
               <Button asChild>
-                <a href="/auth">Get Started</a>
+                <Link to="/auth">Get Started</Link>
               </Button>
             </div>
           )}
@@ -50,10 +50,10 @@ const Index = () => {
           {!loading && (
             <div className="flex items-center justify-center gap-4">
               <Button size="lg" asChild>
-                <a href="/auth">Start Messaging</a>
+                <Link to="/auth">Start Messaging</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <a href="/auth">Create Account</a>
+                <Link to="/auth">Create Account</Link>
               </Button>
             </div>
           )}
@@ -101,7 +101,7 @@ const Index = () => {
           
           {!loading && (
             <Button size="lg" asChild>
-              <a href="/auth">Create Your Account</a>
+              <Link to="/auth">Create Your Account</Link>
             </Button>
           )}
         </div>

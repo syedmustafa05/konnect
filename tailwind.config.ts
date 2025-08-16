@@ -61,6 +61,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				'message-sent': {
+					DEFAULT: 'hsl(var(--message-bg))',
+					foreground: 'hsl(var(--message-text))'
+				},
+				'message-received': {
+					DEFAULT: 'hsl(var(--received-message-bg))',
+					foreground: 'hsl(var(--received-message-text))'
 				}
 			},
 			borderRadius: {
