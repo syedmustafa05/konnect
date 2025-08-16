@@ -97,8 +97,10 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
   };
 
   const subscribeToMessages = () => {
+    console.log('Setting up real-time subscription for conversation:', conversationId);
+    
     const channel = supabase
-      .channel('messages')
+      .channel(`messages-${conversationId}`)
       .on(
         'postgres_changes',
         {
@@ -108,12 +110,24 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
           filter: `conversation_id=eq.${conversationId}`
         },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message]);
+          console.log('Received new message via real-time:', payload.new);
+          setMessages(prev => {
+            // Check if message already exists to prevent duplicates
+            const exists = prev.some(msg => msg.id === payload.new.id);
+            if (exists) {
+              console.log('Message already exists, skipping duplicate');
+              return prev;
+            }
+            return [...prev, payload.new as Message];
+          });
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   };
@@ -122,26 +136,36 @@ export const ChatWindow = ({ conversationId, currentUserId }: ChatWindowProps) =
     e.preventDefault();
     if (!newMessage.trim() || loading) return;
 
+    console.log('Attempting to send message:', newMessage.trim());
     setLoading(true);
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: currentUserId,
         content: newMessage.trim()
-      });
+      })
+      .select()
+      .single();
 
     if (error) {
       console.error('Error sending message:', error);
-    } else {
-      setNewMessage('');
-      
-      // Update conversation timestamp
-      await supabase
-        .from('conversations')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', conversationId);
+      setLoading(false);
+      return;
+    }
+
+    console.log('Message sent successfully:', data);
+    setNewMessage('');
+    
+    // Update conversation timestamp
+    const { error: updateError } = await supabase
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId);
+
+    if (updateError) {
+      console.error('Error updating conversation timestamp:', updateError);
     }
 
     setLoading(false);
