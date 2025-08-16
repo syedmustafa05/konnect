@@ -174,8 +174,8 @@ const ChatLayout = () => {
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className="w-80 border-r border-border flex flex-col">
+      {/* Sidebar - Hidden on mobile when chat is selected */}
+      <div className={`${selectedConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r border-border flex-col`}>
         <ChatSidebar
           conversations={conversations}
           selectedConversation={selectedConversation}
@@ -185,8 +185,8 @@ const ChatLayout = () => {
         />
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Chat Area - Full width on mobile, hidden when sidebar is shown */}
+      <div className={`${selectedConversation ? 'flex' : 'hidden md:flex'} flex-1 flex-col`}>
         {showSearch ? (
           <UserSearch
             onSelectUser={startConversation}
